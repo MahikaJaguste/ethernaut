@@ -34,33 +34,38 @@ async function main() {
     // console.log("Gate 3 part three:", rhs3.eq(lhs));
 
 
-    const contract = await hre.ethers.getContractAt("GatekeeperOne", "0x6380a5553A84cdcaFe4331c7961442e09d7Fc8c6", signer0);
-    // const contract = await hre.ethers.deployContract("GatekeeperOne", deployer);
+    // const contract = await hre.ethers.getContractAt("GatekeeperTwo", "", signer0);
+    const contract = await hre.ethers.deployContract("GatekeeperTwo", deployer);
     console.log("Contract deployed to address:", contract.address);
     console.log("Contract entrant:", await contract.entrant());
-    const testContract = await hre.ethers.deployContract("HackGatekeeperOne", deployer);
-    // const testContract = await hre.ethers.getContractAt("HackGatekeeperOne", "0x68180a8d85c867CC2806c6C7F0561acDF62cF6f8", deployer);
+    const testContract = await hre.ethers.deployContract("TestGatekeeperTwo", [contract.address], deployer);
+    // const testContract = await hre.ethers.getContractAt("TestGatekeeperTwo", "0x68180a8d85c867CC2806c6C7F0561acDF62cF6f8", deployer);
     console.log("Test contract deployed to:", testContract.address)
 
-    // let gasNeeded = -1;
-    // while(true) {
-    //     try {
-    //         gasNeeded += 1;
-    //         console.log(gasNeeded);
-    //         await testContract.attack(key, 8191 * 3 + gasNeeded);
-    //         console.log("succes at:", gasNeeded);
-    //         break;
-    //     } catch(err) {
-
-    //     }
-    // }
-
-    const tx = await testContract.hack(contract.address, 1, 1000);
-    await tx.wait();
-    const receipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
-    console.log(receipt.logs);
+    // const tx = await testContract.attack();
+    // await tx.wait();
+    // const receipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
+    // console.log(receipt.logs);
    
-    console.log("Contract entrant:", await contract.entrant());
+    // console.log("Contract entrant:", await contract.entrant());
+
+
+    // Understand caller()
+
+    const c1 = await hre.ethers.deployContract("BeingCalled");
+    const c2 = await hre.ethers.deployContract("DelegatorCaller");
+
+    await c1.testCaller();
+    let temp = (await c1.callerValue()).toLowerCase();
+    console.log("Direct call from msg.sender returns msg.sender", temp === deployer.address.toLowerCase() );
+
+    await c2.testCall(c1.address);
+    temp = (await c1.callerValue()).toLowerCase();
+    console.log("Call from contract returns c2 address", temp === c2.address.toLowerCase());
+
+    await c2.testDelegatecall(c1.address);
+    temp = (await c2.callerValue()).toLowerCase();
+    console.log("Delegate call from contract returns msg.sender", temp === deployer.address.toLowerCase());
 }
 
 
